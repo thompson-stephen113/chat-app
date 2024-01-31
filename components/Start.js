@@ -14,47 +14,52 @@ const Start = ({ navigation }) => {
     const colors = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
 
     return (
-        <View style={styles.container}>
-            <ImageBackground source={image} resizeMode="cover" style={styles.background}>
-                <Text style={styles.title}>Chat App</Text>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.container}
+        >
+            <View style={styles.container}>
+                <ImageBackground source={image} resizeMode="cover" style={styles.background}>
+                    <Text style={styles.title}>Chat App</Text>
 
-                <View style={styles.startBox}>
-                    {/* Stores entered name in setName */}
-                    <TextInput
-                        style={styles.textInput}
-                        value={name}
-                        onChangeText={setName}
-                        placeholder="Your Name"
-                    />
+                    <View style={styles.startBox}>
+                        {/* Stores entered name in setName */}
+                        <TextInput
+                            style={styles.textInput}
+                            value={name}
+                            onChangeText={setName}
+                            placeholder="Your Name"
+                        />
 
-                    <Text style={styles.selectorText}>
-                        Choose Background Color:
-                    </Text>
+                        <Text style={styles.selectorText}>
+                            Choose Background Color:
+                        </Text>
 
-                    <View style={styles.colorSelector}>
-                        {/* Maps colors from color variable to TouchableOpacity indexes */}
-                        {colors.map((color, index) => (
-                            <TouchableOpacity
-                                key={index}
-                                style={[
-                                    styles.colorButton, 
-                                    {backgroundColor: color},
-                                    background === color && styles.selectedColor
-                                ]}
-                                onPress={() => setBackground(color)}
-                            />                     
-                        ))}
+                        <View style={styles.colorSelector}>
+                            {/* Maps colors from color variable to TouchableOpacity indexes */}
+                            {colors.map((color, index) => (
+                                <TouchableOpacity
+                                    key={index}
+                                    style={[
+                                        styles.colorButton, 
+                                        {backgroundColor: color},
+                                        background === color && styles.selectedColor
+                                    ]}
+                                    onPress={() => setBackground(color)}
+                                />                     
+                            ))}
+                        </View>
+
+                        <TouchableOpacity
+                            style={styles.button}
+                            onPress={() => navigation.navigate("Chat", { name: name, background: background })}
+                        >
+                            <Text style={styles.buttonText}>Start Chatting</Text>
+                        </TouchableOpacity>
                     </View>
-
-                    <TouchableOpacity
-                        style={styles.button}
-                        onPress={() => navigation.navigate("Chat", { name: name, background: background })}
-                    >
-                        <Text style={styles.buttonText}>Start Chatting</Text>
-                    </TouchableOpacity>
-                </View>
-            </ImageBackground>
-        </View>
+                </ImageBackground>
+            </View>
+        </KeyboardAvoidingView>
     );
 };
 
