@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, ImageBackground } from "react-native";
+import { StyleSheet, View, Text, TouchableOpacity, TextInput, ImageBackground, KeyboardAvoidingView, Platform } from "react-native";
 
 const image = require("../assets/background.png");
 
