@@ -1,18 +1,23 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, View, Text, KeyboardAvoidingView, Platform } from "react-native";
 import { GiftedChat, Bubble } from "react-native-gifted-chat";
+import { collection,
+    addDoc,
+    onSnapshot,
+    query,
+    orderBy
+} from "firebase/firestore";
 
-const Chat = ({ route, navigation }) => {
-    // Extracts name and background color from user selection on Start.js
-    const { name, background } = route.params;
+const Chat = ({ db, route, navigation }) => {
+    // Extracts userID, name, and background color from user selection on Start.js
+    const { userID, name, background } = route.params;
 
     // Sets state of messages
     const [messages, setMessages] = useState([]);
 
     // Appends new messages to the log of previously sent messages
     const onSend = (newMessages) => {
-        setMessages(previousMessages =>
-            GiftedChat.append(previousMessages, newMessages));
+        addDoc(collection(db, "messages"), newMessages[0]);
     };
 
     // Customizes the appearance of the message bubbles
@@ -33,24 +38,29 @@ const Chat = ({ route, navigation }) => {
     useEffect(() => {
         navigation.setOptions ({ title: name });
 
-        setMessages([
-            {
-                _id: 1,
-                text: "Hello, developer.",
-                createdAt: new Date(),
-                user: {
-                    _id: 2,
-                    name: "React Native",
-                    avatar: "https://placeimg.com/140/140/any",
-                },
-            },
-            {
-                _id: 2,
-                text: "This is a system message",
-                createdAt: new Date(),
-                system: true,
-            },
-        ]);
+        // Takes a snapshot of the document files from the shoppinglists collection in the database
+        const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+        
+        const unsubMessages = onSnapshot(q, (docs) => {
+            // Holds the information from each document
+            let newMessages = [];
+
+            // Loops over each object in the collection's documents
+            docs.forEach(doc => {
+                // Adds a new object to the newMessages array with the data of each property-value pair
+                newMessages.push({ 
+                    id: doc.id, 
+                    ...doc.data(),
+                    createdAt: new Date(doc.data().createdAt.toMillis())
+                });
+            });
+            setMessages(newMessages);
+        });
+
+        // Cleanup code
+        return () => {
+            if (unsubMessages) unsubMessages();
+        };
     }, []);
 
     return (
@@ -63,7 +73,8 @@ const Chat = ({ route, navigation }) => {
                 renderBubble={renderBubble}
                 onSend={messages => onSend(messages)}
                 user={{
-                    _id: 1
+                    _id: userID,
+                    name: name
                 }}
             />
 
