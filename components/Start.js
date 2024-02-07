@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, ImageBackground, KeyboardAvoidingView, Platform } from "react-native";
+import {
+    StyleSheet,
+    View,
+    Text,
+    TouchableOpacity,
+    TextInput,
+    ImageBackground,
+    KeyboardAvoidingView,
+    Platform, Alert
+} from "react-native";
+import { getAuth, signInAnonymously } from "firebase/auth";
 
 const image = require("../assets/background.png");
 
@@ -12,6 +22,21 @@ const Start = ({ navigation }) => {
 
     // Stores background colors in an array
     const colors = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
+
+    // Initializes authorization
+    const auth = getAuth();
+    
+    // Signs in user anonymously
+    const signInUser = () => {
+        signInAnonymously(auth)
+            .then(result => {
+                navigation.navigate("Chat", { userID: result.user.uid, name: name, background: background });
+                Alert.alert("Signed in successfully.");
+            })
+            .catch((error) => {
+                Alert.alert("Unable to sign in, try again later.");
+            })
+    };
 
     return (
         // Prevents keyboard from altering screen layout
@@ -53,7 +78,7 @@ const Start = ({ navigation }) => {
 
                         <TouchableOpacity
                             style={styles.button}
-                            onPress={() => navigation.navigate("Chat", { name: name, background: background })}
+                            onPress={signInUser}
                         >
                             <Text style={styles.buttonText}>Start Chatting</Text>
                         </TouchableOpacity>
