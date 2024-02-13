@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View, Text, KeyboardAvoidingView, Platform } from "react-native";
-import { GiftedChat, Bubble } from "react-native-gifted-chat";
+import {
+    StyleSheet,
+    View,
+    Text,
+    KeyboardAvoidingView,
+    Platform
+} from "react-native";
+import { GiftedChat, Bubble, InputToolbar } from "react-native-gifted-chat";
 import { collection,
     addDoc,
     onSnapshot,
     query,
     orderBy
 } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const Chat = ({ db, route, navigation }) => {
+const Chat = ({ db, route, navigation, isConnected }) => {
     // Extracts userID, name, and background color from user selection on Start.js
     const { userID, name, background } = route.params;
 
@@ -35,33 +42,63 @@ const Chat = ({ db, route, navigation }) => {
         />
     };
 
+    // Prevents Gifted Chat from rendering InputToolbar when offline
+    const renderInputToolbar = (props) => {
+        if (isConnected) return <InputToolbar {...props} />;
+        else return null;
+    };
+
+    // Caches message history
+    const cacheChat = async (messagestoCache) => {
+        try {
+            await AsyncStorage.setItem("messages", JSON.stringify(messagestoCache));
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
+
+    // Loads cached message history when isConnected is false
+    const loadCachedMessages = async () => {
+        const cachedMessages = await AsyncStorage.getItem("messages") || [];
+        setMessages(JSON.parse(cachedMessages));
+    };
+
+    let unsubMessages;
     useEffect(() => {
         navigation.setOptions ({ title: name });
 
-        // Takes a snapshot of the document files from the shoppinglists collection in the database
-        const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
-        
-        const unsubMessages = onSnapshot(q, (docs) => {
-            // Holds the information from each document
-            let newMessages = [];
+        if (isConnected === true) {
+            // Unregisters current onSnapshot() listener to avoid registering multiple listeners
+            if (unsubMessages) unsubMessages();
+            unsubMessages = null;
 
-            // Loops over each object in the collection's documents
-            docs.forEach(doc => {
-                // Adds a new object to the newMessages array with the data of each property-value pair
-                newMessages.push({ 
-                    id: doc.id, 
-                    ...doc.data(),
-                    createdAt: new Date(doc.data().createdAt.toMillis())
+            // Takes a snapshot of the document files from the shoppinglists collection in the database
+            const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+            
+            unsubMessages = onSnapshot(q, (docs) => {
+                // Holds the information from each document
+                let newMessages = [];
+
+                // Loops over each object in the collection's documents
+                docs.forEach(doc => {
+                    // Adds a new object to the newMessages array with the data of each property-value pair
+                    newMessages.push({ 
+                        id: doc.id, 
+                        ...doc.data(),
+                        createdAt: new Date(doc.data().createdAt.toMillis())
+                    });
                 });
+
+                cacheChat(newMessages);
+                setMessages(newMessages);
             });
-            setMessages(newMessages);
-        });
+        } else loadCachedMessages();
 
         // Cleanup code
         return () => {
             if (unsubMessages) unsubMessages();
         };
-    }, []);
+    }, [isConnected]);
 
     return (
         <View style={[styles.container, {backgroundColor: background}]}>
@@ -71,6 +108,7 @@ const Chat = ({ db, route, navigation }) => {
             <GiftedChat
                 messages={messages}
                 renderBubble={renderBubble}
+                renderInputToolbar={renderInputToolbar}
                 onSend={messages => onSend(messages)}
                 user={{
                     _id: userID,
