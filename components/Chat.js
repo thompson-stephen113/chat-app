@@ -4,7 +4,8 @@ import {
     View,
     Text,
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    LogBox
 } from "react-native";
 import { GiftedChat, Bubble, InputToolbar } from "react-native-gifted-chat";
 import { collection,
@@ -14,6 +15,11 @@ import { collection,
     orderBy
 } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+LogBox.ignoreLogs([
+    "Cannot connect to Metro",
+    "@firebase/firestore"
+]);
 
 const Chat = ({ db, route, navigation, isConnected }) => {
     // Extracts userID, name, and background color from user selection on Start.js
