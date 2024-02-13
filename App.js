@@ -8,7 +8,10 @@ import { Alert, LogBox } from "react-native";
 import Start from "./components/Start";
 import Chat from "./components/Chat";
 
-LogBox.ignoreLogs(["AsyncStorage has been extracted from"]);
+LogBox.ignoreLogs([
+	"AsyncStorage has been extracted from",
+	"@firebase/auth: Auth"
+]);
 
 const Stack = createNativeStackNavigator();
 
