@@ -15,13 +15,15 @@ import { collection,
     orderBy
 } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import CustomActions from "./CustomActions";
+import MapView from "react-native-maps";
 
 LogBox.ignoreLogs([
     "Cannot connect to Metro",
     "@firebase/firestore"
 ]);
 
-const Chat = ({ db, route, navigation, isConnected }) => {
+const Chat = ({ db, route, navigation, isConnected, storage }) => {
     // Extracts userID, name, and background color from user selection on Start.js
     const { userID, name, background } = route.params;
 
@@ -33,7 +35,7 @@ const Chat = ({ db, route, navigation, isConnected }) => {
         addDoc(collection(db, "messages"), newMessages[0]);
     };
 
-    // Customizes the appearance of the message bubbles
+    // Customizes the appearance of the Bubble component
     const renderBubble = (props) => {
         return <Bubble
             {...props}
@@ -53,6 +55,35 @@ const Chat = ({ db, route, navigation, isConnected }) => {
         if (isConnected) return <InputToolbar {...props} />;
         else return null;
     };
+
+    // Passes props to CustomActions component
+    const renderCustomActions = (props) => {
+        return <CustomActions storage={storage} userID={userID} {...props} />;
+    };
+
+    // Renders a map of the user's location in a message bubble
+    const renderCustomView = (props) => {
+        const { currentMessage } = props;
+        if (currentMessage.location) {
+            return (
+                <MapView
+                    style={{
+                        width: 150,
+                        height: 100,
+                        borderRadius: 13,
+                        margin: 3
+                    }}
+                    region={{
+                        latitude: currentMessage.location.latitude,
+                        longitude: currentMessage.location.longitude,
+                        latitudeDelta: 0.0922,
+                        longitudeDelta: 0.0421
+                    }}
+                />
+            );
+        }
+        return null;
+    }
 
     // Caches message history
     const cacheChat = async (messagestoCache) => {
@@ -115,6 +146,8 @@ const Chat = ({ db, route, navigation, isConnected }) => {
                 messages={messages}
                 renderBubble={renderBubble}
                 renderInputToolbar={renderInputToolbar}
+                renderActions={renderCustomActions}
+                renderCustomView={renderCustomView}
                 onSend={messages => onSend(messages)}
                 user={{
                     _id: userID,
